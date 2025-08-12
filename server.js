@@ -18,12 +18,6 @@ const KAKAO_REST_API_KEY = process.env.KAKAO_REST_API_KEY || 'YOUR_KAKAO_REST_AP
 app.use(cors());
 app.use(express.json());
 
-// 정적 파일 제공 (CSS, JS, 이미지 등)
-app.use('/css', express.static(path.join(__dirname, 'css')));
-app.use('/js', express.static(path.join(__dirname, 'js')));
-app.use('/data', express.static(path.join(__dirname, 'data')));
-app.use(express.static(path.join(__dirname, '/')));
-
 // 정적 파일 제공
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
@@ -469,6 +463,12 @@ async function generatePathCoordinates(center, distance) {
     
     return path;
 }
+
+// 정적 파일 제공 (API 엔드포인트 이후에 설정)
+app.use('/css', express.static(path.join(__dirname, 'css')));
+app.use('/js', express.static(path.join(__dirname, 'js')));
+app.use('/data', express.static(path.join(__dirname, 'data')));
+app.use(express.static(path.join(__dirname, '/')));
 
 // 서버 시작
 app.listen(PORT, () => {
