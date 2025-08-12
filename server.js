@@ -17,6 +17,11 @@ const KAKAO_REST_API_KEY = process.env.KAKAO_REST_API_KEY || 'YOUR_KAKAO_REST_AP
 // 미들웨어 설정
 app.use(cors());
 app.use(express.json());
+
+// 정적 파일 제공 (CSS, JS, 이미지 등)
+app.use('/css', express.static(path.join(__dirname, 'css')));
+app.use('/js', express.static(path.join(__dirname, 'js')));
+app.use('/data', express.static(path.join(__dirname, 'data')));
 app.use(express.static(path.join(__dirname, '/')));
 
 // 정적 파일 제공
