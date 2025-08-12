@@ -266,26 +266,34 @@ function getCurrentLocation() {
                 const lat = position.coords.latitude;
                 const lng = position.coords.longitude;
                 
-                try {
-                    // 좌표를 주소로 변환
-                    const geocoder = new kakao.maps.services.Geocoder();
-                    geocoder.coord2Address(lng, lat, function(result, status) {
-                        if (status === kakao.maps.services.Status.OK) {
-                            const address = result[0].address.address_name;
-                            // 두개의 입력 필드에 모두 값을 설정
-                            document.getElementById('location').value = address;
-                            document.getElementById('location-inline').value = address;
-                            
-                            // 지도 중심 이동
-                            const currentPosition = new kakao.maps.LatLng(lat, lng);
-                            map.setCenter(currentPosition);
-                            
-                            // 현재 위치 마커 표시
-                            addMarker(currentPosition, '현재 위치');
-                        }
-                    });
-                } catch (error) {
-                    console.error('카카오맵 API 사용 중 오류:', error);
+                // 카카오맵 API가 로드되었는지 확인
+                if (typeof kakao !== 'undefined' && kakao.maps) {
+                    try {
+                        // 좌표를 주소로 변환
+                        const geocoder = new kakao.maps.services.Geocoder();
+                        geocoder.coord2Address(lng, lat, function(result, status) {
+                            if (status === kakao.maps.services.Status.OK) {
+                                const address = result[0].address.address_name;
+                                // 두개의 입력 필드에 모두 값을 설정
+                                document.getElementById('location').value = address;
+                                document.getElementById('location-inline').value = address;
+                                
+                                // 지도 중심 이동
+                                const currentPosition = new kakao.maps.LatLng(lat, lng);
+                                map.setCenter(currentPosition);
+                                
+                                // 현재 위치 마커 표시
+                                addMarker(currentPosition, '현재 위치');
+                            }
+                        });
+                    } catch (error) {
+                        console.error('카카오맵 API 사용 중 오류:', error);
+                        // 좌표만 입력 필드에 설정
+                        document.getElementById('location').value = `${lat}, ${lng}`;
+                        document.getElementById('location-inline').value = `${lat}, ${lng}`;
+                    }
+                } else {
+                    console.log('카카오맵 API가 아직 로드되지 않았습니다. 좌표만 설정합니다.');
                     // 좌표만 입력 필드에 설정
                     document.getElementById('location').value = `${lat}, ${lng}`;
                     document.getElementById('location-inline').value = `${lat}, ${lng}`;
@@ -303,30 +311,41 @@ function getCurrentLocation() {
 
 // 마커 추가 함수
 function addMarker(position, title) {
+    // 카카오맵 API가 로드되지 않았으면 건너뛰기
+    if (typeof kakao === 'undefined' || !kakao.maps) {
+        console.log('카카오맵 API가 로드되지 않아 마커를 추가할 수 없습니다.');
+        return null;
+    }
+    
     // 기존 마커 제거
     removeAllMarkers();
     
-    // 새 마커 생성
-    const marker = new kakao.maps.Marker({
-        position: position,
-        map: map,
-        title: title
-    });
-    
-    // 마커 배열에 추가
-    markers.push(marker);
-    
-    // 인포윈도우 생성
-    const infowindow = new kakao.maps.InfoWindow({
-        content: `<div style="padding:5px;font-size:12px;">${title}</div>`
-    });
-    
-    // 마커 클릭 시 인포윈도우 표시
-    kakao.maps.event.addListener(marker, 'click', function() {
-        infowindow.open(map, marker);
-    });
-    
-    return marker;
+    try {
+        // 새 마커 생성
+        const marker = new kakao.maps.Marker({
+            position: position,
+            map: map,
+            title: title
+        });
+        
+        // 마커 배열에 추가
+        markers.push(marker);
+        
+        // 인포윈도우 생성
+        const infowindow = new kakao.maps.InfoWindow({
+            content: `<div style="padding:5px;font-size:12px;">${title}</div>`
+        });
+        
+        // 마커 클릭 시 인포윈도우 표시
+        kakao.maps.event.addListener(marker, 'click', function() {
+            infowindow.open(map, marker);
+        });
+        
+        return marker;
+    } catch (error) {
+        console.error('마커 생성 중 오류:', error);
+        return null;
+    }
 }
 
 // 모든 마커 제거 함수
