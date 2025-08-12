@@ -456,19 +456,39 @@ function collectFormData() {
 // 주소를 좌표로 변환하는 함수
 function addressToCoordinates(address) {
     return new Promise((resolve, reject) => {
-        const geocoder = new kakao.maps.services.Geocoder();
+        // 카카오맵 API가 로드되지 않았으면 기본 좌표 반환
+        if (typeof kakao === 'undefined' || !kakao.maps) {
+            console.log('카카오맵 API가 로드되지 않아 기본 좌표를 사용합니다.');
+            // 서울시청 좌표를 기본값으로 사용
+            resolve({
+                lat: 37.566826,
+                lng: 126.9786567
+            });
+            return;
+        }
         
-        geocoder.addressSearch(address, function(result, status) {
-            if (status === kakao.maps.services.Status.OK) {
-                const coords = {
-                    lat: result[0].y,
-                    lng: result[0].x
-                };
-                resolve(coords);
-            } else {
-                reject(new Error('주소를 좌표로 변환하는데 실패했습니다.'));
-            }
-        });
+        try {
+            const geocoder = new kakao.maps.services.Geocoder();
+            
+            geocoder.addressSearch(address, function(result, status) {
+                if (status === kakao.maps.services.Status.OK) {
+                    const coords = {
+                        lat: result[0].y,
+                        lng: result[0].x
+                    };
+                    resolve(coords);
+                } else {
+                    reject(new Error('주소를 좌표로 변환하는데 실패했습니다.'));
+                }
+            });
+        } catch (error) {
+            console.error('주소 변환 중 오류:', error);
+            // 오류 발생 시 기본 좌표 반환
+            resolve({
+                lat: 37.566826,
+                lng: 126.9786567
+            });
+        }
     });
 }
 
