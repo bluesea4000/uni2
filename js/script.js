@@ -33,6 +33,8 @@ function loadKakaoMapAPI(apiKey) {
         // API 로드 완료 후 초기화
         kakao.maps.load(function() {
             initMap();
+            // API 로딩 완료 플래그 설정
+            window.kakaoMapLoaded = true;
         });
     };
     script.onerror = function() {
@@ -252,29 +254,42 @@ function updateEmotionValue() {
 
 // 현재 위치 가져오기 함수
 function getCurrentLocation() {
+    // 카카오맵 API가 로드되지 않았으면 대기
+    if (!window.kakaoMapLoaded) {
+        alert('카카오맵이 아직 로드되지 않았습니다. 잠시 후 다시 시도해주세요.');
+        return;
+    }
+    
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
             function(position) {
                 const lat = position.coords.latitude;
                 const lng = position.coords.longitude;
                 
-                // 좌표를 주소로 변환
-                const geocoder = new kakao.maps.services.Geocoder();
-                geocoder.coord2Address(lng, lat, function(result, status) {
-                    if (status === kakao.maps.services.Status.OK) {
-                        const address = result[0].address.address_name;
-                        // 두개의 입력 필드에 모두 값을 설정
-                        document.getElementById('location').value = address;
-                        document.getElementById('location-inline').value = address;
-                        
-                        // 지도 중심 이동
-                        const currentPosition = new kakao.maps.LatLng(lat, lng);
-                        map.setCenter(currentPosition);
-                        
-                        // 현재 위치 마커 표시
-                        addMarker(currentPosition, '현재 위치');
-                    }
-                });
+                try {
+                    // 좌표를 주소로 변환
+                    const geocoder = new kakao.maps.services.Geocoder();
+                    geocoder.coord2Address(lng, lat, function(result, status) {
+                        if (status === kakao.maps.services.Status.OK) {
+                            const address = result[0].address.address_name;
+                            // 두개의 입력 필드에 모두 값을 설정
+                            document.getElementById('location').value = address;
+                            document.getElementById('location-inline').value = address;
+                            
+                            // 지도 중심 이동
+                            const currentPosition = new kakao.maps.LatLng(lat, lng);
+                            map.setCenter(currentPosition);
+                            
+                            // 현재 위치 마커 표시
+                            addMarker(currentPosition, '현재 위치');
+                        }
+                    });
+                } catch (error) {
+                    console.error('카카오맵 API 사용 중 오류:', error);
+                    // 좌표만 입력 필드에 설정
+                    document.getElementById('location').value = `${lat}, ${lng}`;
+                    document.getElementById('location-inline').value = `${lat}, ${lng}`;
+                }
             },
             function(error) {
                 console.error('위치 정보를 가져오는데 실패했습니다:', error);
